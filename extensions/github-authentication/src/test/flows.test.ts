@@ -138,7 +138,7 @@ suite('getFlows', () => {
 			]
 		},
 		{
-			label: 'Code - OSS. Local filesystem. GitHub.com',
+			label: 'AI IDE. Local filesystem. GitHub.com',
 			query: {
 				extensionHost: ExtensionHost.Local,
 				isSupportedClient: false,
@@ -151,7 +151,7 @@ suite('getFlows', () => {
 			]
 		},
 		{
-			label: 'Code - OSS. Local filesystem. GitHub Hosted Enterprise',
+			label: 'AI IDE. Local filesystem. GitHub Hosted Enterprise',
 			query: {
 				extensionHost: ExtensionHost.Local,
 				isSupportedClient: false,
