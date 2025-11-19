@@ -1,0 +1,15 @@
+.agent-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.agent-card {
+  padding: 10px;
+  border: 1px solid var(--vscode-editor-foreground);
+  margin-bottom: 10px;
+}
+
+.agent-card h3 {
+  margin-top: 0;
+}

@@ -25,7 +25,8 @@
       "agent-manager": [
         {
           "id": "agent-manager-view",
-          "name": "Agent Manager"
+          "name": "Agent Manager",
+          "type": "webview"
         }
       ]
     }
