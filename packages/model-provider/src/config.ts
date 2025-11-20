@@ -7,7 +7,7 @@ import { OpenAIAdapter } from './adapters/OpenAIAdapter';
 import { CustomAdapter } from './adapters/CustomAdapter';
 import { SecretStore } from './types';
 
-interface ProviderConfig {
+export interface ProviderConfig {
     type: 'local' | 'api';
     baseURL?: string;
     apiKey?: string;
@@ -16,7 +16,7 @@ interface ProviderConfig {
     [key: string]: any;
 }
 
-interface Config {
+export interface Config {
     models: {
         default: string;
         providers: Record<string, ProviderConfig>;
@@ -105,6 +105,38 @@ export class ConfigManager {
 
         } catch (error) {
             console.error('Failed to load configuration:', error);
+        }
+    }
+
+    async save(config: Config): Promise<void> {
+        try {
+            await fs.promises.writeFile(this.configPath, JSON.stringify(config, null, 2), 'utf-8');
+            // Reload to apply changes
+            await this.load();
+        } catch (error) {
+            console.error('Failed to save configuration:', error);
+            throw error;
+        }
+    }
+
+    async exportSettings(destPath: string): Promise<void> {
+        try {
+            if (fs.existsSync(this.configPath)) {
+                await fs.promises.copyFile(this.configPath, destPath);
+            }
+        } catch (error) {
+             console.error('Failed to export settings:', error);
+             throw error;
+        }
+    }
+
+    async importSettings(srcPath: string): Promise<void> {
+        try {
+             await fs.promises.copyFile(srcPath, this.configPath);
+             await this.load();
+        } catch (error) {
+             console.error('Failed to import settings:', error);
+             throw error;
         }
     }
 }

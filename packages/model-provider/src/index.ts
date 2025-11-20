@@ -8,3 +8,5 @@ export * from './config';
 export * from './metrics';
 export * from './strategies/Fallback';
 export * from './strategies/Committee';
+export * from './strategies/LoadBalancer';
+export * from './adapters/HuggingFaceAdapter';

@@ -6,6 +6,8 @@ import { registry, AdapterRegistry } from '../src/AdapterRegistry';
 import { metricsCollector } from '../src/metrics';
 import { FallbackAdapter } from '../src/strategies/Fallback';
 import { CommitteeAdapter } from '../src/strategies/Committee';
+import { LoadBalancerAdapter } from '../src/strategies/LoadBalancer';
+import { HuggingFaceAdapter } from '../src/adapters/HuggingFaceAdapter';
 import * as assert from 'assert';
 
 // Mock global fetch
@@ -256,6 +258,37 @@ async function testCommittee() {
     console.log('Committee passed');
 }
 
+async function testLoadBalancer() {
+    console.log('Testing LoadBalancer...');
+    const p1 = new MockProvider('p1', false, 'Result A');
+    const p2 = new MockProvider('p2', false, 'Result B');
+
+    const lb = new LoadBalancerAdapter([p1, p2]);
+
+    // First call: p1
+    let result = await lb.generate('prompt', {});
+    assert.strictEqual(result.content, 'Result A');
+
+    // Second call: p2
+    result = await lb.generate('prompt', {});
+    assert.strictEqual(result.content, 'Result B');
+
+    // Third call: p1
+    result = await lb.generate('prompt', {});
+    assert.strictEqual(result.content, 'Result A');
+
+    console.log('LoadBalancer passed');
+}
+
+async function testHuggingFace() {
+    console.log('Testing HuggingFace...');
+    const hf = new HuggingFaceAdapter();
+    // Check availability only to avoid downloading model
+    const available = await hf.isAvailable();
+    assert.strictEqual(available, true);
+    console.log('HuggingFace passed');
+}
+
 async function runTests() {
     try {
         await testOllama();
@@ -266,6 +299,8 @@ async function runTests() {
         await testMetrics();
         await testFallback();
         await testCommittee();
+        await testLoadBalancer();
+        await testHuggingFace();
         console.log('All tests passed!');
     } catch (error) {
         console.error('Test failed:', error);
