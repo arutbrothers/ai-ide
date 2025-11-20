@@ -1,4 +1,4 @@
-import { ModelProvider, GenerateOptions, Message, Tool } from '../types';
+import { ModelProvider, GenerateOptions, Message, Tool, ModelResponse } from '../types';
 
 export class OpenAIAdapter implements ModelProvider {
     name = 'OpenAI';
@@ -13,7 +13,7 @@ export class OpenAIAdapter implements ModelProvider {
         private model: string = 'gpt-4o'
     ) {}
 
-    async generate(prompt: string, options: GenerateOptions): Promise<string> {
+    async generate(prompt: string, options: GenerateOptions): Promise<ModelResponse> {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -39,7 +39,15 @@ export class OpenAIAdapter implements ModelProvider {
         }
 
         const data = await response.json();
-        return data.choices[0].message.content;
+
+        return {
+            content: data.choices[0].message.content,
+            usage: data.usage ? {
+                promptTokens: data.usage.prompt_tokens,
+                completionTokens: data.usage.completion_tokens,
+                totalTokens: data.usage.total_tokens
+            } : undefined
+        };
     }
 
     async *generateStream(prompt: string, options: GenerateOptions): AsyncIterableIterator<string> {
@@ -102,6 +110,53 @@ export class OpenAIAdapter implements ModelProvider {
                 }
             }
         }
+    }
+
+    async toolCall(messages: Message[], tools: Tool[], options?: GenerateOptions): Promise<ModelResponse> {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.apiKey}`,
+            },
+            body: JSON.stringify({
+                model: this.model,
+                messages: messages,
+                tools: tools.map(t => ({
+                    type: 'function',
+                    function: {
+                        name: t.name,
+                        description: t.description,
+                        parameters: t.parameters
+                    }
+                })),
+                temperature: options?.temperature ?? 0.7,
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`OpenAI ToolCall error: ${response.status} ${error}`);
+        }
+
+        const data = await response.json();
+        const msg = data.choices[0].message;
+
+        return {
+            content: msg.content || '',
+            toolCalls: msg.tool_calls ? msg.tool_calls.map((tc: any) => ({
+                id: tc.id,
+                function: {
+                    name: tc.function.name,
+                    arguments: tc.function.arguments
+                }
+            })) : undefined,
+            usage: data.usage ? {
+                promptTokens: data.usage.prompt_tokens,
+                completionTokens: data.usage.completion_tokens,
+                totalTokens: data.usage.total_tokens
+            } : undefined
+        };
     }
 
     async isAvailable(): Promise<boolean> {

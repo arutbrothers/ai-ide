@@ -1,4 +1,4 @@
-import { ModelProvider, GenerateOptions } from '../types';
+import { ModelProvider, GenerateOptions, ModelResponse } from '../types';
 
 export class CommitteeAdapter implements ModelProvider {
     name = 'Committee';
@@ -14,16 +14,17 @@ export class CommitteeAdapter implements ModelProvider {
         }
     }
 
-    async generate(prompt: string, options: GenerateOptions): Promise<string> {
+    async generate(prompt: string, options: GenerateOptions): Promise<ModelResponse> {
         // Run all providers in parallel
         const promises = this.providers.map(async (provider) => {
             try {
                 const start = Date.now();
-                const content = await provider.generate(prompt, options);
+                const response = await provider.generate(prompt, options);
                 const duration = Date.now() - start;
                 return {
                     provider: provider.name,
-                    content,
+                    content: response.content,
+                    usage: response.usage,
                     error: null,
                     duration
                 };
@@ -31,6 +32,7 @@ export class CommitteeAdapter implements ModelProvider {
                 return {
                     provider: provider.name,
                     content: null,
+                    usage: undefined,
                     error: (error as Error).message,
                     duration: 0
                 };
@@ -39,12 +41,32 @@ export class CommitteeAdapter implements ModelProvider {
 
         const results = await Promise.all(promises);
 
-        // Return as structured JSON
-        return JSON.stringify({
+        // Aggregate usage
+        let totalPrompt = 0;
+        let totalCompletion = 0;
+
+        for (const res of results) {
+            if (res.usage) {
+                totalPrompt += res.usage.promptTokens;
+                totalCompletion += res.usage.completionTokens;
+            }
+        }
+
+        // Return as structured JSON in content
+        const content = JSON.stringify({
             committee: true,
             timestamp: new Date(),
             results
         }, null, 2);
+
+        return {
+            content,
+            usage: {
+                promptTokens: totalPrompt,
+                completionTokens: totalCompletion,
+                totalTokens: totalPrompt + totalCompletion
+            }
+        };
     }
 
     async *generateStream(prompt: string, options: GenerateOptions): AsyncIterableIterator<string> {
@@ -53,8 +75,7 @@ export class CommitteeAdapter implements ModelProvider {
 
     async isAvailable(): Promise<boolean> {
         const availabilities = await Promise.all(this.providers.map(p => p.isAvailable()));
-        // Available if at least 2 are available? Or all?
-        // Let's say available if we have at least 2 to form a committee.
+        // Available if at least 2 are available
         return availabilities.filter(a => a).length >= 2;
     }
 

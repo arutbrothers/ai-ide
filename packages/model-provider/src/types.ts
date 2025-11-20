@@ -29,13 +29,38 @@ export interface ModelProvider {
     maxContextTokens: number;
 
     // Core methods
-    generate(prompt: string, options: GenerateOptions): Promise<string>;
+    generate(prompt: string, options: GenerateOptions): Promise<ModelResponse>;
     generateStream(prompt: string, options: GenerateOptions): AsyncIterableIterator<string>;
     isAvailable(): Promise<boolean>;
     getInfo(): Promise<Record<string, any>>;
 
-    // Tool calling (optional)
-    toolCall?(messages: Message[], tools: Tool[]): Promise<any>;
+    // Tool calling
+    toolCall?(messages: Message[], tools: Tool[], options?: GenerateOptions): Promise<ModelResponse>;
+
+    // Model Management (Optional)
+    listModels?(): Promise<string[]>;
+    pullModel?(model: string): Promise<void>;
+    deleteModel?(model: string): Promise<void>;
+}
+
+export interface TokenUsage {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+}
+
+export interface ModelResponse {
+    content: string; // or null if tool call?
+    toolCalls?: ToolCall[];
+    usage?: TokenUsage;
+}
+
+export interface ToolCall {
+    id: string;
+    function: {
+        name: string;
+        arguments: string; // JSON string
+    };
 }
 
 export interface ModelProviderInfo {

@@ -53,7 +53,13 @@ async function mockFetch(url: string | Request, options: any) {
                 // Mock stream response for Ollama
                 return new MockResponse(JSON.stringify({ response: 'Hello', done: false }) + '\n' + JSON.stringify({ response: ' World', done: true }));
             }
-            return new MockResponse(JSON.stringify({ response: 'Generated text' }));
+            return new MockResponse(JSON.stringify({ response: 'Generated text', prompt_eval_count: 10, eval_count: 20 }));
+        }
+        if (urlStr.endsWith('/api/chat')) {
+             return new MockResponse(JSON.stringify({ message: { content: '', tool_calls: [{ function: { name: 'test_tool', arguments: {} } }] }, prompt_eval_count: 5, eval_count: 5 }));
+        }
+        if (urlStr.endsWith('/api/pull') || urlStr.endsWith('/api/delete')) {
+            return new MockResponse('{}');
         }
     }
 
@@ -66,7 +72,17 @@ async function mockFetch(url: string | Request, options: any) {
             const streamData = `event: message_start\ndata: {}\n\nevent: content_block_delta\ndata: {"type": "content_block_delta", "index": 0, "delta": {"type": "text_delta", "text": "Claude"}}\n\nevent: content_block_delta\ndata: {"type": "content_block_delta", "index": 1, "delta": {"type": "text_delta", "text": " says hi"}}\n\nevent: message_stop\ndata: {"type": "message_stop"}\n\n`;
             return new MockResponse(streamData);
         }
-        return new MockResponse(JSON.stringify({ content: [{ text: 'Claude response' }] }));
+        // Tool call check (mock response with tool use)
+        if (body.tools) {
+             return new MockResponse(JSON.stringify({
+                 content: [{ type: 'tool_use', id: 'tool_1', name: 'test_tool', input: {} }],
+                 usage: { input_tokens: 10, output_tokens: 10 }
+             }));
+        }
+        return new MockResponse(JSON.stringify({
+            content: [{ text: 'Claude response', type: 'text' }],
+            usage: { input_tokens: 5, output_tokens: 10 }
+        }));
     }
 
     // OpenAI
@@ -77,7 +93,16 @@ async function mockFetch(url: string | Request, options: any) {
             const streamData = `data: {"choices":[{"delta":{"content":"GPT"}}]}\n\ndata: {"choices":[{"delta":{"content":" response"}}]}\n\ndata: [DONE]\n\n`;
             return new MockResponse(streamData);
         }
-        return new MockResponse(JSON.stringify({ choices: [{ message: { content: 'GPT response' } }] }));
+        if (body.tools) {
+             return new MockResponse(JSON.stringify({
+                 choices: [{ message: { content: null, tool_calls: [{ id: 'call_1', function: { name: 'test_tool', arguments: '{}' } }] } }],
+                 usage: { prompt_tokens: 10, completion_tokens: 10, total_tokens: 20 }
+             }));
+        }
+        return new MockResponse(JSON.stringify({
+            choices: [{ message: { content: 'GPT response' } }],
+            usage: { prompt_tokens: 5, completion_tokens: 5, total_tokens: 10 }
+        }));
     }
 
     // Custom
@@ -96,7 +121,13 @@ async function testOllama() {
     console.log('Testing Ollama...');
     const adapter = new OllamaAdapter();
     const result = await adapter.generate('test', {});
-    assert.strictEqual(result, 'Generated text');
+    assert.strictEqual(result.content, 'Generated text');
+    assert.strictEqual(result.usage?.totalTokens, 30);
+
+    // Test Tool Call
+    const toolResult = await adapter.toolCall!([], [{name: 'test_tool', description: 'test', parameters: {}}]);
+    assert.ok(toolResult.toolCalls);
+    assert.strictEqual(toolResult.toolCalls[0].function.name, 'test_tool');
 
     const stream = adapter.generateStream('test', {});
     let streamed = '';
@@ -111,7 +142,13 @@ async function testAnthropic() {
     console.log('Testing Anthropic...');
     const adapter = new AnthropicAdapter('fake-key');
     const result = await adapter.generate('test', {});
-    assert.strictEqual(result, 'Claude response');
+    assert.strictEqual(result.content, 'Claude response');
+    assert.strictEqual(result.usage?.totalTokens, 15);
+
+    // Test Tool Call
+    const toolResult = await adapter.toolCall!([], [{name: 'test_tool', description: 'test', parameters: {}}]);
+    assert.ok(toolResult.toolCalls);
+    assert.strictEqual(toolResult.toolCalls[0].function.name, 'test_tool');
 
     const stream = adapter.generateStream('test', {});
     let streamed = '';
@@ -126,7 +163,13 @@ async function testOpenAI() {
     console.log('Testing OpenAI...');
     const adapter = new OpenAIAdapter('fake-key');
     const result = await adapter.generate('test', {});
-    assert.strictEqual(result, 'GPT response');
+    assert.strictEqual(result.content, 'GPT response');
+    assert.strictEqual(result.usage?.totalTokens, 10);
+
+    // Test Tool Call
+    const toolResult = await adapter.toolCall!([], [{name: 'test_tool', description: 'test', parameters: {}}]);
+    assert.ok(toolResult.toolCalls);
+    assert.strictEqual(toolResult.toolCalls[0].function.name, 'test_tool');
 
     const stream = adapter.generateStream('test', {});
     let streamed = '';
@@ -141,7 +184,7 @@ async function testCustom() {
     console.log('Testing Custom...');
     const adapter = new CustomAdapter('http://custom-api:8080');
     const result = await adapter.generate('test', {});
-    assert.strictEqual(result, 'Custom response');
+    assert.strictEqual(result.content, 'Custom response');
     console.log('Custom passed');
 }
 
@@ -179,7 +222,7 @@ class MockProvider {
 
     async generate() {
         if (this.shouldFail) throw new Error('Fail');
-        return this.output;
+        return { content: this.output };
     }
     async *generateStream() { yield this.output; }
     async isAvailable() { return true; }
@@ -193,7 +236,7 @@ async function testFallback() {
 
     const fallback = new FallbackAdapter([p1, p2]);
     const result = await fallback.generate('prompt', {});
-    assert.strictEqual(result, 'Success');
+    assert.strictEqual(result.content, 'Success');
     console.log('Fallback passed');
 }
 
@@ -204,7 +247,7 @@ async function testCommittee() {
 
     const committee = new CommitteeAdapter([p1, p2]);
     const result = await committee.generate('prompt', {});
-    const json = JSON.parse(result);
+    const json = JSON.parse(result.content);
 
     assert.strictEqual(json.committee, true);
     assert.strictEqual(json.results.length, 2);

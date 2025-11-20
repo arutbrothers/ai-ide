@@ -1,4 +1,4 @@
-import { ModelProvider, GenerateOptions, Message, Tool } from '../types';
+import { ModelProvider, GenerateOptions, Message, Tool, ModelResponse, ToolCall } from '../types';
 
 export class AnthropicAdapter implements ModelProvider {
     name = 'Anthropic';
@@ -13,7 +13,7 @@ export class AnthropicAdapter implements ModelProvider {
         private model: string = 'claude-3-sonnet-20240229'
     ) {}
 
-    async generate(prompt: string, options: GenerateOptions): Promise<string> {
+    async generate(prompt: string, options: GenerateOptions): Promise<ModelResponse> {
         const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -35,7 +35,16 @@ export class AnthropicAdapter implements ModelProvider {
         }
 
         const data = await response.json();
-        return data.content[0].text;
+        const textContent = data.content.find((c: any) => c.type === 'text')?.text || '';
+
+        return {
+            content: textContent,
+            usage: data.usage ? {
+                promptTokens: data.usage.input_tokens,
+                completionTokens: data.usage.output_tokens,
+                totalTokens: data.usage.input_tokens + data.usage.output_tokens
+            } : undefined
+        };
     }
 
     async *generateStream(prompt: string, options: GenerateOptions): AsyncIterableIterator<string> {
@@ -94,11 +103,64 @@ export class AnthropicAdapter implements ModelProvider {
         }
     }
 
+    async toolCall(messages: Message[], tools: Tool[], options?: GenerateOptions): Promise<ModelResponse> {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': this.apiKey,
+                'anthropic-version': '2023-06-01',
+            },
+            body: JSON.stringify({
+                model: this.model,
+                max_tokens: options?.maxTokens ?? 4096,
+                messages: messages,
+                tools: tools.map(t => ({
+                    name: t.name,
+                    description: t.description,
+                    input_schema: t.parameters
+                })),
+                temperature: options?.temperature ?? 0.7,
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Anthropic ToolCall error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        let content = '';
+        const toolCalls: ToolCall[] = [];
+
+        for (const block of data.content) {
+            if (block.type === 'text') {
+                content += block.text;
+            } else if (block.type === 'tool_use') {
+                toolCalls.push({
+                    id: block.id,
+                    function: {
+                        name: block.name,
+                        arguments: JSON.stringify(block.input)
+                    }
+                });
+            }
+        }
+
+        return {
+            content,
+            toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+            usage: data.usage ? {
+                promptTokens: data.usage.input_tokens,
+                completionTokens: data.usage.output_tokens,
+                totalTokens: data.usage.input_tokens + data.usage.output_tokens
+            } : undefined
+        };
+    }
+
     async isAvailable(): Promise<boolean> {
-        // Check if API key is valid by making a small request or just assume true if key exists
         if (!this.apiKey) return false;
         try {
-            // Minimal request to check auth
             await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
                 headers: {

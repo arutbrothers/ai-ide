@@ -1,4 +1,4 @@
-import { ModelProvider, GenerateOptions, Message, Tool } from '../types';
+import { ModelProvider, GenerateOptions, Message, Tool, ModelResponse } from '../types';
 
 export class FallbackAdapter implements ModelProvider {
     name = 'Fallback';
@@ -18,7 +18,7 @@ export class FallbackAdapter implements ModelProvider {
         this.maxContextTokens = providers[0].maxContextTokens;
     }
 
-    async generate(prompt: string, options: GenerateOptions): Promise<string> {
+    async generate(prompt: string, options: GenerateOptions): Promise<ModelResponse> {
         const errors: Error[] = [];
 
         for (const provider of this.providers) {
@@ -54,6 +54,21 @@ export class FallbackAdapter implements ModelProvider {
         }
 
         throw new Error(`All providers failed. Errors: ${errors.map(e => e.message).join(', ')}`);
+    }
+
+    async toolCall(messages: Message[], tools: Tool[], options?: GenerateOptions): Promise<ModelResponse> {
+        const errors: Error[] = [];
+
+        for (const provider of this.providers) {
+            try {
+                if (await provider.isAvailable() && provider.toolCall) {
+                    return await provider.toolCall(messages, tools, options);
+                }
+            } catch (error) {
+                errors.push(error as Error);
+            }
+        }
+        throw new Error(`All providers failed toolCall. Errors: ${errors.map(e => e.message).join(', ')}`);
     }
 
     async isAvailable(): Promise<boolean> {

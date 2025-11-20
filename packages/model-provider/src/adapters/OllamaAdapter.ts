@@ -1,11 +1,11 @@
-import { ModelProvider, GenerateOptions, Message, Tool } from '../types';
+import { ModelProvider, GenerateOptions, Message, Tool, ModelResponse } from '../types';
 
 export class OllamaAdapter implements ModelProvider {
     name = 'Ollama';
     type: 'local' | 'api' = 'local';
     requiresAuth = false;
     supportsStreaming = true;
-    supportsTools = false; // Ollama tool support varies, defaulting to false for now
+    supportsTools = true;
     maxContextTokens = 4096;
 
     constructor(
@@ -13,7 +13,7 @@ export class OllamaAdapter implements ModelProvider {
         private model: string = 'codellama:7b'
     ) {}
 
-    async generate(prompt: string, options: GenerateOptions): Promise<string> {
+    async generate(prompt: string, options: GenerateOptions): Promise<ModelResponse> {
         const response = await fetch(`${this.baseURL}/api/generate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -21,6 +21,7 @@ export class OllamaAdapter implements ModelProvider {
                 model: this.model,
                 prompt,
                 temperature: options.temperature ?? 0.7,
+                stream: false,
                 options: {
                     num_predict: options.maxTokens ?? 2000,
                     stop: options.stop,
@@ -35,7 +36,15 @@ export class OllamaAdapter implements ModelProvider {
         }
 
         const data = await response.json();
-        return data.response;
+
+        return {
+            content: data.response,
+            usage: {
+                promptTokens: data.prompt_eval_count || 0,
+                completionTokens: data.eval_count || 0,
+                totalTokens: (data.prompt_eval_count || 0) + (data.eval_count || 0)
+            }
+        };
     }
 
     async *generateStream(prompt: string, options: GenerateOptions): AsyncIterableIterator<string> {
@@ -74,7 +83,6 @@ export class OllamaAdapter implements ModelProvider {
 
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split('\n');
-            // Keep the last line in buffer if it's potentially incomplete
             buffer = lines.pop() || '';
 
             for (const line of lines) {
@@ -86,11 +94,8 @@ export class OllamaAdapter implements ModelProvider {
                     if (data.response) {
                         yield data.response;
                     }
-                    if (data.done) {
-                        return;
-                    }
                 } catch (e) {
-                    console.error('Error parsing JSON line:', trimmed, e);
+                    // ignore
                 }
             }
         }
@@ -103,8 +108,88 @@ export class OllamaAdapter implements ModelProvider {
                     yield data.response;
                 }
             } catch (e) {
-                console.error('Error parsing JSON line:', buffer, e);
+                // ignore
             }
+        }
+    }
+
+    async toolCall(messages: Message[], tools: Tool[], options?: GenerateOptions): Promise<ModelResponse> {
+        const response = await fetch(`${this.baseURL}/api/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: this.model,
+                messages: messages,
+                tools: tools.map(t => ({
+                    type: 'function',
+                    function: {
+                        name: t.name,
+                        description: t.description,
+                        parameters: t.parameters
+                    }
+                })),
+                stream: false,
+                options: {
+                    temperature: options?.temperature ?? 0.7,
+                }
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ollama ToolCall error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const msg = data.message;
+
+        return {
+            content: msg.content || '',
+            toolCalls: msg.tool_calls ? msg.tool_calls.map((tc: any) => ({
+                id: 'call_' + Math.random().toString(36).substr(2, 9), // Ollama might not return ID
+                function: {
+                    name: tc.function.name,
+                    arguments: JSON.stringify(tc.function.arguments)
+                }
+            })) : undefined,
+            usage: {
+                promptTokens: data.prompt_eval_count || 0,
+                completionTokens: data.eval_count || 0,
+                totalTokens: (data.prompt_eval_count || 0) + (data.eval_count || 0)
+            }
+        };
+    }
+
+    async listModels(): Promise<string[]> {
+        try {
+            const response = await fetch(`${this.baseURL}/api/tags`);
+            const data = await response.json();
+            return data.models.map((m: any) => m.name);
+        } catch {
+            return [];
+        }
+    }
+
+    async pullModel(model: string): Promise<void> {
+        const response = await fetch(`${this.baseURL}/api/pull`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: model, stream: false })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to pull model ${model}`);
+        }
+    }
+
+    async deleteModel(model: string): Promise<void> {
+        const response = await fetch(`${this.baseURL}/api/delete`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: model })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to delete model ${model}`);
         }
     }
 
@@ -124,15 +209,5 @@ export class OllamaAdapter implements ModelProvider {
             baseURL: this.baseURL,
             type: this.type
         };
-    }
-
-    async listModels(): Promise<string[]> {
-        try {
-            const response = await fetch(`${this.baseURL}/api/tags`);
-            const data = await response.json();
-            return data.models.map((m: any) => m.name);
-        } catch {
-            return [];
-        }
     }
 }
