@@ -11,7 +11,16 @@ export class OllamaAdapter implements ModelProvider {
     constructor(
         private baseURL: string = 'http://localhost:11434',
         private model: string = 'codellama:7b'
-    ) {}
+    ) {
+        try {
+            const url = new URL(baseURL);
+            if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+                throw new Error('Invalid protocol');
+            }
+        } catch (e) {
+            throw new Error(`Invalid Ollama URL: ${baseURL}`);
+        }
+    }
 
     async generate(prompt: string, options: GenerateOptions): Promise<ModelResponse> {
         const response = await fetch(`${this.baseURL}/api/generate`, {

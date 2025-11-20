@@ -13,6 +13,15 @@ export class CustomAdapter implements ModelProvider {
         private apiKey?: string,
         private model: string = 'default'
     ) {
+        try {
+            const url = new URL(baseURL);
+            if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+                throw new Error('Invalid protocol');
+            }
+        } catch (e) {
+            throw new Error(`Invalid Base URL: ${baseURL}`);
+        }
+
         this.requiresAuth = !!apiKey;
         this.type = baseURL.includes('localhost') || baseURL.includes('127.0.0.1') ? 'local' : 'api';
     }

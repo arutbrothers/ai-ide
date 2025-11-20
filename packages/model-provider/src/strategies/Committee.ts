@@ -8,9 +8,16 @@ export class CommitteeAdapter implements ModelProvider {
     supportsTools = false;
     maxContextTokens = 4096;
 
-    constructor(private providers: ModelProvider[]) {
+    constructor(
+        private providers: ModelProvider[],
+        private judge?: ModelProvider,
+        private votingPrompt: string = "Analyze the following responses and provide the best answer. If they agree, summarize. If they disagree, pick the correct one and explain."
+    ) {
         if (providers.length < 2) {
             throw new Error('CommitteeAdapter requires at least two providers');
+        }
+        if (judge) {
+            this.maxContextTokens = judge.maxContextTokens;
         }
     }
 
@@ -49,6 +56,34 @@ export class CommitteeAdapter implements ModelProvider {
             if (res.usage) {
                 totalPrompt += res.usage.promptTokens;
                 totalCompletion += res.usage.completionTokens;
+            }
+        }
+
+        // If we have a judge, let it decide
+        if (this.judge) {
+            const candidates = results.map((r, i) => `--- Model ${r.provider} ---\n${r.content}`).join('\n\n');
+            const judgePrompt = `Original Prompt: ${prompt}\n\nResponses:\n${candidates}\n\n${this.votingPrompt}`;
+
+            try {
+                const verdict = await this.judge.generate(judgePrompt, options);
+
+                // Add judge usage
+                if (verdict.usage) {
+                    totalPrompt += verdict.usage.promptTokens;
+                    totalCompletion += verdict.usage.completionTokens;
+                }
+
+                return {
+                    content: verdict.content,
+                    usage: {
+                        promptTokens: totalPrompt,
+                        completionTokens: totalCompletion,
+                        totalTokens: totalPrompt + totalCompletion
+                    }
+                };
+            } catch (e) {
+                console.warn('Judge failed, falling back to raw results', e);
+                // Fallback to JSON below
             }
         }
 

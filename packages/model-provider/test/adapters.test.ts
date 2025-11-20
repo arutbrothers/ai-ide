@@ -248,6 +248,7 @@ async function testCommittee() {
     const p1 = new MockProvider('p1', false, 'Result A');
     const p2 = new MockProvider('p2', false, 'Result B');
 
+    // Test basic committee
     const committee = new CommitteeAdapter([p1, p2]);
     const result = await committee.generate('prompt', {});
     const json = JSON.parse(result.content);
@@ -256,7 +257,32 @@ async function testCommittee() {
     assert.strictEqual(json.results.length, 2);
     assert.strictEqual(json.results[0].content, 'Result A');
     assert.strictEqual(json.results[1].content, 'Result B');
+
+    // Test with Judge
+    const judge = new MockProvider('judge', false, 'Verdict: A is better');
+    const judgeCommittee = new CommitteeAdapter([p1, p2], judge);
+    const judgeResult = await judgeCommittee.generate('prompt', {});
+    assert.strictEqual(judgeResult.content, 'Verdict: A is better');
+
     console.log('Committee passed');
+}
+
+async function testSecurity() {
+    console.log('Testing Security...');
+    try {
+        new OllamaAdapter('ftp://invalid');
+        assert.fail('Should fail with invalid protocol');
+    } catch (e) {
+        assert.ok((e as Error).message.includes('Invalid Ollama URL'));
+    }
+
+    try {
+        new CustomAdapter('not-a-url');
+        assert.fail('Should fail with invalid URL');
+    } catch (e) {
+        assert.ok((e as Error).message.includes('Invalid Base URL'));
+    }
+    console.log('Security passed');
 }
 
 async function testLoadBalancer() {
@@ -327,6 +353,7 @@ async function runTests() {
         await testLoadBalancer();
         await testTokenRouting();
         await testHuggingFace();
+        await testSecurity();
         console.log('All tests passed!');
     } catch (error) {
         console.error('Test failed:', error);
