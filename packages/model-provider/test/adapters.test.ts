@@ -4,6 +4,8 @@ import { OpenAIAdapter } from '../src/adapters/OpenAIAdapter';
 import { CustomAdapter } from '../src/adapters/CustomAdapter';
 import { registry, AdapterRegistry } from '../src/AdapterRegistry';
 import { metricsCollector } from '../src/metrics';
+import { FallbackAdapter } from '../src/strategies/Fallback';
+import { CommitteeAdapter } from '../src/strategies/Committee';
 import * as assert from 'assert';
 
 // Mock global fetch
@@ -165,6 +167,52 @@ async function testMetrics() {
     console.log('Metrics passed');
 }
 
+class MockProvider {
+    name = 'Mock';
+    type = 'local' as const;
+    requiresAuth = false;
+    supportsStreaming = false;
+    supportsTools = false;
+    maxContextTokens = 1000;
+
+    constructor(private id: string, private shouldFail: boolean = false, private output: string = 'mock') {}
+
+    async generate() {
+        if (this.shouldFail) throw new Error('Fail');
+        return this.output;
+    }
+    async *generateStream() { yield this.output; }
+    async isAvailable() { return true; }
+    async getInfo() { return { name: this.name, id: this.id }; }
+}
+
+async function testFallback() {
+    console.log('Testing Fallback...');
+    const p1 = new MockProvider('p1', true); // Fails
+    const p2 = new MockProvider('p2', false, 'Success');
+
+    const fallback = new FallbackAdapter([p1, p2]);
+    const result = await fallback.generate('prompt', {});
+    assert.strictEqual(result, 'Success');
+    console.log('Fallback passed');
+}
+
+async function testCommittee() {
+    console.log('Testing Committee...');
+    const p1 = new MockProvider('p1', false, 'Result A');
+    const p2 = new MockProvider('p2', false, 'Result B');
+
+    const committee = new CommitteeAdapter([p1, p2]);
+    const result = await committee.generate('prompt', {});
+    const json = JSON.parse(result);
+
+    assert.strictEqual(json.committee, true);
+    assert.strictEqual(json.results.length, 2);
+    assert.strictEqual(json.results[0].content, 'Result A');
+    assert.strictEqual(json.results[1].content, 'Result B');
+    console.log('Committee passed');
+}
+
 async function runTests() {
     try {
         await testOllama();
@@ -173,6 +221,8 @@ async function runTests() {
         await testCustom();
         await testRegistry();
         await testMetrics();
+        await testFallback();
+        await testCommittee();
         console.log('All tests passed!');
     } catch (error) {
         console.error('Test failed:', error);

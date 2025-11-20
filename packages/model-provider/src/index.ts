@@ -6,3 +6,5 @@ export * from './adapters/CustomAdapter';
 export * from './AdapterRegistry';
 export * from './config';
 export * from './metrics';
+export * from './strategies/Fallback';
+export * from './strategies/Committee';

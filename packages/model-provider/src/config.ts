@@ -5,6 +5,7 @@ import { OllamaAdapter } from './adapters/OllamaAdapter';
 import { AnthropicAdapter } from './adapters/AnthropicAdapter';
 import { OpenAIAdapter } from './adapters/OpenAIAdapter';
 import { CustomAdapter } from './adapters/CustomAdapter';
+import { SecretStore } from './types';
 
 interface ProviderConfig {
     type: 'local' | 'api';
@@ -25,16 +26,31 @@ interface Config {
 
 export class ConfigManager {
     private configPath: string;
+    private secretStore?: SecretStore;
 
-    constructor(rootPath: string = process.cwd(), configName: string = '.aiiderc.json') {
+    constructor(rootPath: string = process.cwd(), configName: string = '.aiiderc.json', secretStore?: SecretStore) {
         this.configPath = path.resolve(rootPath, configName);
+        this.secretStore = secretStore;
     }
 
-    private substituteEnv(value: string): string {
+    private async resolveValue(value: string): Promise<string> {
         if (!value) return value;
-        return value.replace(/\$\{([^}]+)\}/g, (_, envVar) => {
-            return process.env[envVar] || '';
-        });
+
+        // Handle Env Vars
+        if (value.match(/\$\{([^}]+)\}/)) {
+             return value.replace(/\$\{([^}]+)\}/g, (_, envVar) => {
+                return process.env[envVar] || '';
+            });
+        }
+
+        // Handle Secrets
+        if (value.startsWith('secret:') && this.secretStore) {
+            const key = value.slice(7);
+            const secret = await this.secretStore.get(key);
+            return secret || '';
+        }
+
+        return value;
     }
 
     async load(): Promise<void> {
@@ -51,8 +67,8 @@ export class ConfigManager {
             for (const [id, providerConfig] of Object.entries(config.models.providers)) {
                 if (providerConfig.enabled === false) continue;
 
-                const apiKey = providerConfig.apiKey ? this.substituteEnv(providerConfig.apiKey) : undefined;
-                const baseURL = providerConfig.baseURL ? this.substituteEnv(providerConfig.baseURL) : undefined;
+                const apiKey = providerConfig.apiKey ? await this.resolveValue(providerConfig.apiKey) : undefined;
+                const baseURL = providerConfig.baseURL ? await this.resolveValue(providerConfig.baseURL) : undefined;
                 const model = providerConfig.model;
 
                 switch (id) {
