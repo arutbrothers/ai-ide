@@ -102,6 +102,13 @@ export const ConfigureAdapterModal: React.FC<Props> = ({ providerId, initialConf
                 {testResult && (
                     <div className={`test-result ${testResult.success ? 'success' : 'error'}`}>
                         {testResult.message}
+                        {!testResult.success && (
+                            <div style={{ marginTop: 5, fontSize: '0.9em' }}>
+                                <a href="#" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+                                    View Troubleshooting Guide
+                                </a>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
