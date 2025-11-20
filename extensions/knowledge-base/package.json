@@ -9,12 +9,47 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onView:knowledge-base-view"
+  ],
   "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "knowledge-base",
+          "title": "Knowledge Base",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "knowledge-base": [
+        {
+          "id": "knowledge-base-view",
+          "name": "Knowledge Base",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "knowledge-base.search",
+        "title": "Search Knowledge Base"
+      },
+      {
+        "command": "knowledge-base.add",
+        "title": "Add to Knowledge Base"
+      }
+    ]
+  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "level": "^8.0.0"
   },
   "devDependencies": {
     "@types/vscode": "^1.107.0",
