@@ -17,6 +17,10 @@ export interface ProviderConfig {
 }
 
 export interface Config {
+    general?: {
+        approvalThreshold?: number;
+        autoVerification?: boolean;
+    };
     models: {
         default: string;
         providers: Record<string, ProviderConfig>;
@@ -27,10 +31,15 @@ export interface Config {
 export class ConfigManager {
     private configPath: string;
     private secretStore?: SecretStore;
+    private currentConfig: Config | null = null;
 
     constructor(rootPath: string = process.cwd(), configName: string = '.aiiderc.json', secretStore?: SecretStore) {
         this.configPath = path.resolve(rootPath, configName);
         this.secretStore = secretStore;
+    }
+
+    getConfig(): Config | null {
+        return this.currentConfig;
     }
 
     private async resolveValue(value: string): Promise<string> {
@@ -62,6 +71,7 @@ export class ConfigManager {
         try {
             const content = await fs.promises.readFile(this.configPath, 'utf-8');
             const config: Config = JSON.parse(content);
+            this.currentConfig = config;
 
             // Configure providers
             for (const [id, providerConfig] of Object.entries(config.models.providers)) {

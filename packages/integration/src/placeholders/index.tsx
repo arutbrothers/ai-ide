@@ -12,3 +12,4 @@ export const AgentManager = () => <Placeholder title="Agent Manager" shortcut="C
 export const ArtifactViewer = () => <Placeholder title="Artifact Viewer" shortcut="CMD+Shift+V" />;
 export const BrowserPanel = () => <Placeholder title="Browser Panel" shortcut="CMD+Shift+B" />;
 export const KnowledgeBase = () => <Placeholder title="Knowledge Base" shortcut="CMD+Shift+K" />;
+export { CreateAgentModal } from './CreateAgentModal';

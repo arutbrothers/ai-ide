@@ -1,10 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ModelSettings, ConfigureAdapterModal, ModelMetricsPanel } from '@ai-ide/model-settings-ui';
 import { registry, metricsCollector, ConfigManager } from '@ai-ide/model-provider';
 
 export const SettingsPage: React.FC = () => {
     const [configureId, setConfigureId] = useState<string | null>(null);
-    const configManager = new ConfigManager(); // Use default path
+    const [generalConfig, setGeneralConfig] = useState({ approvalThreshold: 80, autoVerification: true });
+    // Note: ConfigManager instantiation should ideally be a singleton or context
+    const [configManager] = useState(() => new ConfigManager());
+
+    useEffect(() => {
+        configManager.load().then(() => {
+            const cfg = configManager.getConfig();
+            if (cfg?.general) {
+                setGeneralConfig({
+                    approvalThreshold: cfg.general.approvalThreshold ?? 80,
+                    autoVerification: cfg.general.autoVerification ?? true
+                });
+            }
+        });
+    }, [configManager]);
 
     const handleSaveConfig = async (id: string, config: any) => {
         // Load current, update, save
@@ -24,9 +38,42 @@ export const SettingsPage: React.FC = () => {
         }
     };
 
+    const handleGeneralChange = (key: string, value: any) => {
+        const newConfig = { ...generalConfig, [key]: value };
+        setGeneralConfig(newConfig);
+        // Save to file logic would go here
+        // For now we just update state
+        console.log('Updated general settings:', newConfig);
+    };
+
     return (
         <div className="settings-page" style={{ padding: 20 }}>
             <h1>Settings</h1>
+
+            <section style={{ marginBottom: 30 }}>
+                <h2>General Settings</h2>
+                <div style={{ marginBottom: 15 }}>
+                    <label style={{ display: 'block', marginBottom: 5 }}>Approval Threshold ({generalConfig.approvalThreshold}%)</label>
+                    <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={generalConfig.approvalThreshold}
+                        onChange={(e) => handleGeneralChange('approvalThreshold', parseInt(e.target.value))}
+                        style={{ width: '300px' }}
+                    />
+                </div>
+                <div style={{ marginBottom: 15 }}>
+                    <label>
+                        <input
+                            type="checkbox"
+                            checked={generalConfig.autoVerification}
+                            onChange={(e) => handleGeneralChange('autoVerification', e.target.checked)}
+                        />
+                        {' '}Enable Auto-Verification
+                    </label>
+                </div>
+            </section>
 
             <section>
                 <h2>AI Models</h2>
