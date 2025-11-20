@@ -9,4 +9,5 @@ export * from './metrics';
 export * from './strategies/Fallback';
 export * from './strategies/Committee';
 export * from './strategies/LoadBalancer';
+export * from './strategies/TokenRoutingAdapter';
 export * from './adapters/HuggingFaceAdapter';

@@ -7,6 +7,7 @@ import { metricsCollector } from '../src/metrics';
 import { FallbackAdapter } from '../src/strategies/Fallback';
 import { CommitteeAdapter } from '../src/strategies/Committee';
 import { LoadBalancerAdapter } from '../src/strategies/LoadBalancer';
+import { TokenRoutingAdapter } from '../src/strategies/TokenRoutingAdapter';
 import { HuggingFaceAdapter } from '../src/adapters/HuggingFaceAdapter';
 import * as assert from 'assert';
 
@@ -289,6 +290,30 @@ async function testHuggingFace() {
     console.log('HuggingFace passed');
 }
 
+async function testTokenRouting() {
+    console.log('Testing TokenRouting...');
+    const small = new MockProvider('small', false, 'Small Response');
+    const large = new MockProvider('large', false, 'Large Response');
+
+    // Threshold 10 chars approx (10/4 = 2.5 tokens) -> let's use characters for estimation check
+    // estimateTokens = ceil(len/4).
+    // Threshold = 2.
+    // "Short" (5 chars) -> 2 tokens <= 2? No, 5/4 = 1.25 -> ceil -> 2.
+    // "Longer" (20 chars) -> 5 tokens > 2.
+
+    const router = new TokenRoutingAdapter(small, large, 2);
+
+    // Short prompt (len 4) -> 1 token <= 2 -> Small
+    let result = await router.generate('1234', {});
+    assert.strictEqual(result.content, 'Small Response');
+
+    // Long prompt (len 12) -> 3 tokens > 2 -> Large
+    result = await router.generate('123456789012', {});
+    assert.strictEqual(result.content, 'Large Response');
+
+    console.log('TokenRouting passed');
+}
+
 async function runTests() {
     try {
         await testOllama();
@@ -300,6 +325,7 @@ async function runTests() {
         await testFallback();
         await testCommittee();
         await testLoadBalancer();
+        await testTokenRouting();
         await testHuggingFace();
         console.log('All tests passed!');
     } catch (error) {
