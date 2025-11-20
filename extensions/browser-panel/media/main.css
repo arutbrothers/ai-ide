@@ -1,0 +1,34 @@
+body, html {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.browser-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.toolbar {
+    display: flex;
+    padding: 5px;
+    border-bottom: 1px solid var(--vscode-editor-foreground);
+}
+
+#url-bar {
+    flex-grow: 1;
+}
+
+#root {
+    flex-grow: 1;
+}
+
+.action-log {
+    height: 150px;
+    border-top: 1px solid var(--vscode-editor-foreground);
+    padding: 5px;
+    overflow-y: auto;
+}
