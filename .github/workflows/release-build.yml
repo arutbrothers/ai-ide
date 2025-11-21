@@ -6,49 +6,51 @@ on:
       - 'release/**'
 
 jobs:
-  macos_build:
-    runs-on: macos-latest
-    name: "Build for Mac OS"
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: arm64
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          path: 'repository'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install Dependencies
-        working-directory: ./repository
-        run: npm install
-
-      - name: Build Mac OS Executables
-        working-directory: ./repository
-        run: npm run gulp vscode-darwin-arm64-min
-
-      - name: Package Application
-        working-directory: ./repository
-        run: |
-          cd ..
-          ditto -c -k --sequesterRsrc --keepParent "VSCode-darwin-arm64/AI IDE.app" "ai-ide-darwin-arm64.zip"
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ai-ide-darwin-arm64
-          path: "ai-ide-darwin-arm64.zip"
+#   macos_build:
+#     runs-on: macos-latest
+#     name: "Build for Mac OS"
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         include:
+#           - arch: arm64
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v4
+#         with:
+#           path: 'repository'
+#
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: "20"
+#           cache: 'npm'
+#           cache-dependency-path: repository/package-lock.json
+#
+#       - name: Set up Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.12'
+#
+#       - name: Install Dependencies
+#         working-directory: ./repository
+#         run: npm install
+#
+#       - name: Build Mac OS Executables
+#         working-directory: ./repository
+#         run: npm run gulp vscode-darwin-arm64-min
+#
+#       - name: Package Application
+#         working-directory: ./repository
+#         run: |
+#           cd ..
+#           ditto -c -k --sequesterRsrc --keepParent "VSCode-darwin-arm64/AI IDE.app" "ai-ide-darwin-arm64.zip"
+#
+#       - name: Upload Artifact
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: ai-ide-darwin-arm64
+#           path: "ai-ide-darwin-arm64.zip"
 
   windows_build:
     runs-on: windows-latest
@@ -66,10 +68,17 @@ jobs:
         with:
           path: 'repository'
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
+          cache: 'pnpm'
+          cache-dependency-path: repository/pnpm-lock.yaml
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -78,19 +87,19 @@ jobs:
 
       - name: Install Dependencies
         working-directory: ./repository
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build Executables
         working-directory: ./repository
-        run: npm run gulp vscode-win32-x64-min
+        run: pnpm run gulp vscode-win32-x64-min
 
       - name: Apply Inno Setup Updater
         working-directory: ./repository
-        run: npm run gulp vscode-win32-x64-inno-updater
+        run: pnpm run gulp vscode-win32-x64-inno-updater
 
       - name: Create Installer
         working-directory: ./repository
-        run: npm run gulp vscode-win32-x64-user-setup
+        run: pnpm run gulp vscode-win32-x64-user-setup
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
