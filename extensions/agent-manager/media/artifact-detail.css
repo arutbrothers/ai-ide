@@ -1,0 +1,152 @@
+.artifact-container {
+	padding: 20px;
+	background: var(--vscode-editor-background);
+	color: var(--vscode-editor-foreground);
+	min-height: 100vh;
+}
+
+.artifact-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20px;
+	padding-bottom: 16px;
+	border-bottom: 2px solid var(--vscode-panel-border);
+}
+
+.artifact-header h1 {
+	margin: 0;
+	font-size: 24px;
+	font-weight: 600;
+}
+
+.artifact-actions {
+	display: flex;
+	gap: 8px;
+}
+
+button {
+	padding: 8px 16px;
+	background: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	font-family: var(--vscode-font-family);
+	font-size: 13px;
+}
+
+button:hover {
+	background: var(--vscode-button-hoverBackground);
+}
+
+button.danger {
+	background: var(--vscode-errorForeground);
+	color: white;
+}
+
+button.danger:hover {
+	opacity: 0.9;
+}
+
+.artifact-metadata {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 16px;
+	margin-bottom: 24px;
+	padding: 16px;
+	background: var(--vscode-sideBar-background);
+	border-radius: 6px;
+}
+
+.metadata-item {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.metadata-item label {
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	color: var(--vscode-descriptionForeground);
+}
+
+.metadata-item span {
+	font-size: 14px;
+	color: var(--vscode-editor-foreground);
+	font-family: var(--vscode-editor-font-family);
+}
+
+.artifact-content {
+	margin-bottom: 24px;
+	background: var(--vscode-editor-background);
+	border: 1px solid var(--vscode-panel-border);
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.artifact-content pre {
+	margin: 0;
+	padding: 16px;
+	overflow-x: auto;
+	font-family: var(--vscode-editor-font-family);
+	font-size: 13px;
+	line-height: 1.6;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+}
+
+.artifact-files {
+	background: var(--vscode-sideBar-background);
+	border-radius: 6px;
+	padding: 16px;
+}
+
+.artifact-files h3 {
+	margin: 0 0 12px 0;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.file-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.file-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px;
+	margin-bottom: 4px;
+	background: var(--vscode-editor-background);
+	border-radius: 4px;
+	transition: background 0.2s;
+}
+
+.file-item:hover {
+	background: var(--vscode-list-hoverBackground);
+}
+
+.file-icon {
+	font-size: 16px;
+}
+
+.file-path {
+	flex: 1;
+	font-family: var(--vscode-editor-font-family);
+	font-size: 13px;
+}
+
+.open-file-btn {
+	padding: 4px 12px;
+	font-size: 12px;
+	background: var(--vscode-button-secondaryBackground);
+	color: var(--vscode-button-secondaryForeground);
+}
+
+.open-file-btn:hover {
+	background: var(--vscode-button-secondaryHoverBackground);
+}

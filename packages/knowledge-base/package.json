@@ -1,0 +1,13 @@
+{
+	"name": "@ai-ide/knowledge-base",
+	"version": "0.0.1",
+	"main": "src/index.ts",
+	"dependencies": {
+		"level": "^8.0.0",
+		"uuid": "^9.0.0"
+	},
+	"devDependencies": {
+		"@types/uuid": "^9.0.0",
+		"typescript": "^5.0.0"
+	}
+}

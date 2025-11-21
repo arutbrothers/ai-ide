@@ -1,0 +1,12 @@
+{
+	"name": "@ai-ide/browser-control",
+	"version": "0.0.1",
+	"main": "src/index.ts",
+	"dependencies": {
+		"playwright": "^1.40.0",
+		"@ai-ide/artifact-system": "workspace:*"
+	},
+	"devDependencies": {
+		"typescript": "^5.0.0"
+	}
+}

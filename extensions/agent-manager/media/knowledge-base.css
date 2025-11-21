@@ -1,0 +1,243 @@
+.kb-container {
+	padding: 20px;
+	background: var(--vscode-editor-background);
+	color: var(--vscode-editor-foreground);
+	min-height: 100vh;
+}
+
+.kb-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.kb-header h1 {
+	margin: 0;
+	font-size: 24px;
+	font-weight: 600;
+}
+
+.kb-stats {
+	display: flex;
+	gap: 16px;
+	font-size: 13px;
+	color: var(--vscode-descriptionForeground);
+}
+
+.stat-item {
+	padding: 4px 8px;
+	background: var(--vscode-badge-background);
+	color: var(--vscode-badge-foreground);
+	border-radius: 4px;
+}
+
+.kb-toolbar {
+	display: flex;
+	gap: 8px;
+	margin-bottom: 20px;
+}
+
+#search-input {
+	flex: 1;
+	padding: 8px 12px;
+	background: var(--vscode-input-background);
+	color: var(--vscode-input-foreground);
+	border: 1px solid var(--vscode-input-border);
+	border-radius: 4px;
+	font-family: var(--vscode-font-family);
+}
+
+button {
+	padding: 8px 16px;
+	background: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	font-family: var(--vscode-font-family);
+}
+
+button:hover {
+	background: var(--vscode-button-hoverBackground);
+}
+
+.kb-list {
+	display: grid;
+	gap: 12px;
+}
+
+.kb-item {
+	padding: 16px;
+	background: var(--vscode-sideBar-background);
+	border: 1px solid var(--vscode-panel-border);
+	border-radius: 6px;
+	transition: border-color 0.2s;
+}
+
+.kb-item:hover {
+	border-color: var(--vscode-focusBorder);
+}
+
+.kb-item-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 8px;
+}
+
+.kb-type {
+	display: inline-block;
+	padding: 3px 8px;
+	border-radius: 3px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+.kb-type-function {
+	background: #3794ff33;
+	color: #3794ff;
+}
+
+.kb-type-pattern {
+	background: #89d18533;
+	color: #89d185;
+}
+
+.kb-type-concept {
+	background: #f48fb133;
+	color: #f48fb1;
+}
+
+.kb-type-task {
+	background: #ffab7033;
+	color: #ffab70;
+}
+
+.kb-type-other {
+	background: #b39ddb33;
+	color: #b39ddb;
+}
+
+.kb-timestamp {
+	font-size: 11px;
+	color: var(--vscode-descriptionForeground);
+}
+
+.kb-content {
+	margin: 12px 0;
+	line-height: 1.6;
+	white-space: pre-wrap;
+	font-family: var(--vscode-editor-font-family);
+	font-size: 13px;
+}
+
+.kb-metadata {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+	margin: 12px 0;
+}
+
+.kb-tag {
+	padding: 2px 8px;
+	background: var(--vscode-badge-background);
+	color: var(--vscode-badge-foreground);
+	border-radius: 3px;
+	font-size: 11px;
+}
+
+.kb-actions {
+	display: flex;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.kb-actions button {
+	padding: 4px 12px;
+	font-size: 12px;
+}
+
+.edit-btn {
+	background: var(--vscode-button-secondaryBackground);
+	color: var(--vscode-button-secondaryForeground);
+}
+
+.delete-btn {
+	background: var(--vscode-errorForeground);
+	color: white;
+}
+
+.empty-state {
+	text-align: center;
+	padding: 60px 20px;
+	color: var(--vscode-descriptionForeground);
+	font-size: 16px;
+}
+
+/* Modal */
+.modal {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+}
+
+.modal-content {
+	background: var(--vscode-editor-background);
+	padding: 24px;
+	border-radius: 8px;
+	width: 90%;
+	max-width: 600px;
+	max-height: 80vh;
+	overflow-y: auto;
+}
+
+.modal-content h2 {
+	margin: 0 0 20px 0;
+	font-size: 20px;
+}
+
+.form-group {
+	margin-bottom: 16px;
+}
+
+.form-group label {
+	display: block;
+	margin-bottom: 6px;
+	font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+	width: 100%;
+	padding: 8px 12px;
+	background: var(--vscode-input-background);
+	color: var(--vscode-input-foreground);
+	border: 1px solid var(--vscode-input-border);
+	border-radius: 4px;
+	font-family: var(--vscode-font-family);
+	box-sizing: border-box;
+}
+
+.form-group textarea {
+	font-family: var(--vscode-editor-font-family);
+	resize: vertical;
+}
+
+.form-actions {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+	margin-top: 20px;
+}

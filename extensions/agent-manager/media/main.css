@@ -1,15 +1,116 @@
+.agent-manager {
+  padding: 10px;
+}
+
+.agent-manager h1 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: var(--vscode-foreground);
+}
+
 .agent-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.agent-card {
-  padding: 10px;
-  border: 1px solid var(--vscode-editor-foreground);
-  margin-bottom: 10px;
+.agent-list .empty {
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+  padding: 20px;
+  text-align: center;
 }
 
-.agent-card h3 {
-  margin-top: 0;
+.agent-item {
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: var(--vscode-editor-background);
+}
+
+.agent-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.agent-icon {
+  font-size: 18px;
+}
+
+.agent-id {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  flex: 1;
+}
+
+.agent-status {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.status-planning {
+  background: var(--vscode-charts-blue);
+  color: white;
+}
+
+.status-executing {
+  background: var(--vscode-charts-green);
+  color: white;
+}
+
+.status-paused {
+  background: var(--vscode-charts-yellow);
+  color: black;
+}
+
+.status-completed {
+  background: var(--vscode-charts-purple);
+  color: white;
+}
+
+.status-failed {
+  background: var(--vscode-charts-red);
+  color: white;
+}
+
+.agent-goal {
+  font-size: 13px;
+  color: var(--vscode-foreground);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.agent-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.agent-actions button {
+  flex: 1;
+  padding: 6px 12px;
+  font-size: 11px;
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.agent-actions button:hover {
+  background: var(--vscode-button-hoverBackground);
+}
+
+.agent-actions .btn-pause {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.agent-actions .btn-pause:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
 }

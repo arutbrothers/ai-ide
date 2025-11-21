@@ -1,44 +1,60 @@
-// @ts-check
-
-// This script will be run within the webview itself
-// It cannot access the main VS Code APIs directly.
 (function () {
     const vscode = acquireVsCodeApi();
 
-    // Handle messages sent from the extension to the webview
+    const agentList = document.querySelector('.agent-list');
+
+    // Handle messages from extension
     window.addEventListener('message', event => {
-        const message = event.data; // The json data that the extension sent
+        const message = event.data;
+
         switch (message.type) {
             case 'updateAgents':
-                updateAgentList(message.agents);
+                renderAgents(message.agents);
                 break;
         }
     });
 
-    function updateAgentList(agents) {
-        const ul = document.querySelector('.agent-list');
-        ul.textContent = '';
-        for (const agent of agents) {
-            ul.appendChild(createAgentCard(agent));
-        }
-    }
+    function renderAgents(agents) {
+        if (!agentList) return;
 
-    function createAgentCard(agent) {
-        const li = document.createElement('li');
-        li.className = 'agent-card';
-        li.innerHTML = `
-            <h3>${agent.name}</h3>
-            <p>Status: ${agent.status}</p>
-            <progress value="${agent.progress}" max="100"></progress>
-            <button class="pause-button">Pause</button>
-        `;
-        li.querySelector('.pause-button').addEventListener('click', () => {
-            // Handle pause button click
-            vscode.postMessage({
-                type: 'pauseAgent',
-                agentId: agent.id
+        agentList.innerHTML = '';
+
+        if (agents.length === 0) {
+            agentList.innerHTML = '<li class="empty">No active agents. Use Cmd+Shift+A to create one.</li>';
+            return;
+        }
+
+        agents.forEach(agent => {
+            const li = document.createElement('li');
+            li.className = 'agent-item';
+            li.innerHTML = `
+        <div class="agent-header">
+          <span class="agent-icon">🤖</span>
+          <span class="agent-id">${agent.id}</span>
+          <span class="agent-status status-${agent.status}">${agent.status}</span>
+        </div>
+        <div class="agent-goal">${agent.goal}</div>
+        <div class="agent-actions">
+          <button class="btn-pause" data-id="${agent.id}">Pause</button>
+          <button class="btn-details" data-id="${agent.id}">Details</button>
+        </div>
+      `;
+            agentList.appendChild(li);
+        });
+
+        // Add event listeners
+        document.querySelectorAll('.btn-pause').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.target.dataset.id;
+                vscode.postMessage({ type: 'pauseAgent', id });
             });
         });
-        return li;
+
+        document.querySelectorAll('.btn-details').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const id = e.target.dataset.id;
+                vscode.postMessage({ type: 'viewDetails', id });
+            });
+        });
     }
-}());
+})();
