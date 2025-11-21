@@ -6,49 +6,49 @@ on:
       - 'release/**'
 
 jobs:
-  macos_build:
-    runs-on: macos-latest
-    name: "Build for Mac OS"
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: arm64
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          path: 'repository'
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install Dependencies
-        working-directory: ./repository
-        run: npm install
-
-      - name: Build Mac OS Executables
-        working-directory: ./repository
-        run: npm run gulp vscode-darwin-arm64-min
-
-      - name: Package Application
-        working-directory: ./repository
-        run: |
-          cd ..
-          ditto -c -k --sequesterRsrc --keepParent "VSCode-darwin-arm64/AI IDE.app" "ai-ide-darwin-arm64.zip"
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ai-ide-darwin-arm64
-          path: "ai-ide-darwin-arm64.zip"
+#   macos_build:
+#     runs-on: macos-latest
+#     name: "Build for Mac OS"
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         include:
+#           - arch: arm64
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v4
+#         with:
+#           path: 'repository'
+#
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: "20"
+#
+#       - name: Set up Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.12'
+#
+#       - name: Install Dependencies
+#         working-directory: ./repository
+#         run: npm install
+#
+#       - name: Build Mac OS Executables
+#         working-directory: ./repository
+#         run: npm run gulp vscode-darwin-arm64-min
+#
+#       - name: Package Application
+#         working-directory: ./repository
+#         run: |
+#           cd ..
+#           ditto -c -k --sequesterRsrc --keepParent "VSCode-darwin-arm64/AI IDE.app" "ai-ide-darwin-arm64.zip"
+#
+#       - name: Upload Artifact
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: ai-ide-darwin-arm64
+#           path: "ai-ide-darwin-arm64.zip"
 
   windows_build:
     runs-on: windows-latest
@@ -69,7 +69,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Set up Python
         uses: actions/setup-python@v5
