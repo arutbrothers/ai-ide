@@ -1,0 +1,43 @@
+{
+  "name": "agent-manager",
+  "displayName": "Agent Manager",
+  "description": "Mission Control for AI Agents",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.107.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "agent-manager",
+          "title": "Agent Manager",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "agent-manager": [
+        {
+          "id": "agent-manager-view",
+          "name": "Agent Manager",
+          "type": "webview"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.107.0",
+    "typescript": "^6.0.0-dev"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "name": "browser-panel",
+  "displayName": "Browser Panel",
+  "description": "An integrated browser for AI Agents to use",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.107.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:browser-panel-view"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "browser-panel",
+          "title": "Browser",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "browser-panel": [
+        {
+          "id": "browser-panel-view",
+          "name": "Browser",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "browser-panel.navigate",
+        "title": "Navigate"
+      },
+      {
+        "command": "browser-panel.click",
+        "title": "Click"
+      },
+      {
+        "command": "browser-panel.type",
+        "title": "Type"
+      },
+      {
+        "command": "browser-panel.screenshot",
+        "title": "Screenshot"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "playwright": "^1.45.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.107.0",
+    "typescript": "^6.0.0-dev"
+  }
+}
