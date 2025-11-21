@@ -1,66 +1,80 @@
 # AI IDE User Manual
 
 ## Introduction
-Welcome to the AI IDE User Manual. This document provides comprehensive information about the new features and capabilities introduced in the latest version, specifically focusing on the BYOM (Bring Your Own Model) Adapter System and the enhanced Release Workflows.
+Welcome to the AI IDE User Manual. This document details the features of the Antigravity-Inspired AI IDE, a revolutionary development environment designed to prioritize trust, autonomy, feedback, and self-improvement.
 
-## 1. BYOM (Bring Your Own Model) Adapter System
+## 1. Agent Manager (Mission Control)
 
-The AI IDE now features a robust modular architecture for managing Large Language Model (LLM) providers. This system, located in `packages/model-provider`, allows users to integrate various AI models seamlessly into their development workflow.
+The **Agent Manager** is the central hub for orchestrating AI agents. Unlike traditional "chat sidebar" interfaces, this "Mission Control" view allows you to manage autonomous agents as they execute complex tasks.
+
+### Key Capabilities
+*   **Agent Monitoring**: View active agents, their current status (e.g., "Executing", "Planning"), and detailed progress lists.
+*   **Control**: Pause, resume, or cancel agent execution at any time.
+*   **Task Visualization**: Expand agent cards to see the specific steps (research, implementation, verification) being undertaken.
+*   **Access**: Toggle the view using the command `CMD+Shift+M`.
+
+## 2. Artifact-Based Verification
+
+The IDE moves beyond simple text output to **Structured Artifacts**. Agents produce verifiable deliverables that establish trust.
+
+### Artifact Types
+*   **Implementation Plans**: Detailed markdown documents outlining the strategy before code is written.
+*   **Task Lists**: Dynamic lists tracking the status of individual sub-tasks.
+*   **Screenshots**: Visual proof of UI states captured during verification.
+*   **Recordings**: Video walkthroughs (15-30s) demonstrating the functionality of the built feature.
+*   **Code Diffs**: Standardized diffs showing exactly what changed in the codebase.
+*   **Test Results**: JSON reports confirming that the code passes all unit and integration tests.
+
+## 3. Integrated Browser (Verification Surface)
+
+The IDE includes a fully embedded **Chromium-based Browser** that agents can control programmatically. This serves as the primary surface for verification.
+
+### Features
+*   **Agent Control**: Agents can navigate, click, type, and interact with your web application to test functionality.
+*   **Visual Capture**: The browser supports automated screenshotting and video recording of sessions.
+*   **Manual Override**: Users can take control of the browser manually when needed.
+*   **Action Logs**: A real-time log showing every action (click, type, navigate) performed by the agent.
+*   **Access**: Open the browser panel using the command `CMD+Shift+B`.
+
+## 4. BYOM (Bring Your Own Model) Adapter System
+
+The **BYOM System** ensures no vendor lock-in by allowing you to connect any LLM provider to the IDE.
 
 ### Supported Adapters
-The system supports multiple providers out of the box:
+*   **Ollama**: Primary support for offline, local models (e.g., Llama 3, DeepSeek Coder). Cost-effective and private.
+*   **Anthropic**: Direct integration with Claude models (Sonnet 3.5, Opus) for high-complexity reasoning.
+*   **OpenAI**: Support for GPT-4o and other OpenAI models.
+*   **Hugging Face**: Run lightweight models directly via `transformers.js`.
+*   **Custom Adapter**: Connect to any OpenAI-compatible API endpoint (e.g., LM Studio, LocalAI, corporate gateways).
 
-*   **Ollama**: For running local models.
-*   **Anthropic (Claude)**: Integration with Anthropic's API.
-*   **OpenAI (GPT)**: Integration with OpenAI's API.
-*   **Hugging Face**: Connect to Hugging Face Inference Endpoints.
-*   **Custom Adapter**: A flexible adapter that allows connection to any OpenAI-compatible API endpoint. This is ideal for connecting to local servers (like LM Studio, LocalAI) or other proprietary APIs that share the OpenAI interface.
+### Advanced Configuration
+*   **Strategies**: Configure fallback (local → API), committee (multi-model consensus), and load balancing.
+*   **Metrics**: Track token usage, latency, and success rates per provider.
 
-### Key Features
+## 5. Knowledge Base (Self-Improvement)
 
-#### Custom Adapter Configuration
-The `CustomAdapter` is designed for flexibility. It can be configured with:
-*   **Base URL**: The endpoint URL (e.g., `http://localhost:1234/v1` or a remote API).
-*   **API Key**: Optional authentication key.
-*   **Model Name**: The specific model identifier to request.
+The **Knowledge Base** allows the IDE to learn from your project and past successes.
 
-This allows you to "bring your own model" regardless of where it is hosted, as long as it speaks the standard chat completion protocol.
+### Functionality
+*   **Pattern Extraction**: The system analyzes successful tasks to extract reusable code patterns and snippets.
+*   **Semantic Search**: Agents automatically search the knowledge base for relevant context before starting new tasks.
+*   **Management**: Browse, add, and manage knowledge items via the dedicated view (`CMD+Shift+K`).
+*   **Storage**: Efficient local storage using LevelDB with vector embeddings for retrieval.
 
-#### Advanced Strategies
-The provider system is not just about single connections; it supports advanced orchestration strategies:
+## 6. Automated Release Workflows
 
-*   **Fallback**: Automatically switch to a backup provider if the primary one fails or is unavailable.
-*   **Committee**: Query multiple models simultaneously and aggregate their responses for higher accuracy or consensus.
-*   **Load Balancer**: Distribute requests across multiple providers to manage rate limits and performance.
-*   **Token Routing**: Route requests to specific models based on the estimated token count (e.g., use a cheaper model for short queries and a more capable one for long contexts).
+The IDE includes pre-configured CI/CD pipelines to automate the build and release process.
 
-### Configuration
-Providers are managed via the `AdapterRegistry`. By default, the system initializes adapters based on environment variables (e.g., `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`) and defaults to **Ollama** for local execution.
+*   **Trigger**: Pushing to `release/*` branches triggers a full build.
+*   **Windows Build**: Produces `User Setup` installers (`.exe`) using Node.js v22.
+*   **macOS Build**: Cross-compiles macOS ARM64 bundles (`.zip`) using a Dockerized environment.
+*   **Artifacts**: Build outputs are automatically attached to the GitHub Action run.
 
-## 2. Automated Release Workflows
+## 7. Initial Setup & Onboarding
 
-We have significantly enhanced our Continuous Integration and Deployment (CI/CD) pipelines to ensure reliable and automated builds for major platforms.
-
-### Release Build Pipeline
-A new workflow has been introduced to automate the release process:
-
-*   **Trigger**: The workflow is automatically triggered when changes are pushed to `release/*` branches.
-*   **Platforms**:
-    *   **Windows (x64)**: Builds the `User Setup` installer (`.exe`) and minified VS Code artifacts.
-    *   **macOS (ARM64)**: Builds the application bundle for Apple Silicon (`.zip`). *Note: Currently configured for development builds without code signing certificates.*
-*   **Artifacts**: Build artifacts are automatically uploaded to the workflow run, making it easy to test and distribute new versions immediately after a release branch update.
-
-### CI Enhancements
-*   **Node.js Compatibility**: The Windows build pipeline has been updated to use **Node.js v22**, ensuring compatibility with the latest dependencies and performance improvements.
-*   **Performance**: `npm` dependency caching is enabled to significantly reduce build times.
-*   **Clean Environment**: Unnecessary legacy workflows (e.g., specific PR checks for Mac/Windows) have been consolidated or removed to streamline the development process.
-
-## 3. Initial AI IDE Setup
-
-The `feat-initial-ai-ide-setup` introduces the core scaffolding for the AI-enhanced development environment.
-
-*   **Modular Architecture**: The project is organized into packages (`packages/model-provider`, `packages/model-settings-ui`) to separate the AI backend logic from the UI components.
-*   **Settings UI**: A dedicated React-based UI (`model-settings-ui`) is available for configuring model parameters, selecting active providers, and managing API keys directly within the IDE.
+The IDE comes pre-configured with the core scaffolding needed for AI-enhanced development:
+*   **Modular Architecture**: Clear separation between the Agent Runtime (`packages/agent-runtime`), UI (`packages/model-settings-ui`), and Extensions.
+*   **Settings UI**: Dedicated interface for configuring model providers and IDE preferences.
 
 ---
-*This manual is based on the analysis of recent Git commits, including the implementation of the BYOM system and CI/CD workflow updates.*
+*This manual aligns with the "Antigravity-Inspired" build specification, covering all major surfaces (Manager, Editor, Browser) and systems (Artifacts, Knowledge Base, BYOM).*
