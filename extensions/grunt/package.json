@@ -17,9 +17,8 @@
     "compile": "gulp compile-extension:grunt",
     "watch": "gulp watch-extension:grunt"
   },
-  "dependencies": {},
   "devDependencies": {
-    "@types/node": "22.x"
+    "@types/node": "^22.19.1"
   },
   "main": "./out/main",
   "activationEvents": [
